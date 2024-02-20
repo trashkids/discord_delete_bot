@@ -2,8 +2,11 @@ import discord
 import asyncio
 import re
 from typing import List
+from dotenv import load_dotenv
+load_dotenv()
 
-TOKEN = ''  # あなたのDiscordボットのトークンをここに入れてください
+
+TOKEN = 'MTIwMDI4OTYwMzgxMTI5MTE5Nw.G9cF10.prmq2MuaHHsI6FoY6Y7fnI2LblBpuelBdHLNCM'  # あなたのDiscordボットのトークンをここに入れてください
 
 client = discord.Client(intents=discord.Intents.default())
 
