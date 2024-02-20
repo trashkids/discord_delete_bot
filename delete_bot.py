@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-TOKEN = 'MTIwMDI4OTYwMzgxMTI5MTE5Nw.G9cF10.prmq2MuaHHsI6FoY6Y7fnI2LblBpuelBdHLNCM'  # あなたのDiscordボットのトークンをここに入れてください
+TOKEN = 'discord_bot_token'
 
 client = discord.Client(intents=discord.Intents.default())
 
