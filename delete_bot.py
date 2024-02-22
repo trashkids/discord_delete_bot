@@ -2,11 +2,13 @@ import discord
 import asyncio
 import re
 from typing import List
+import os  # osモジュールを追加
 from dotenv import load_dotenv
-load_dotenv()
 
+load_dotenv()  # 環境変数をロード
 
-TOKEN = 'discord_bot_token'
+# 環境変数からトークンを取得
+TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 
 client = discord.Client(intents=discord.Intents.default())
 
@@ -22,17 +24,36 @@ async def delete_message_task(message_info: DeleteMessageInfo):
     try:
         channel = client.get_channel(message_info.channel_id)
         await channel.delete_messages([discord.Object(id=message_info.message_id)])
-    except discord.errors.NotFound:
-        print(f"メッセージID {message_info.message_id} が見つかりません")
-    except discord.errors.Forbidden:
-        print(f"チャンネルID {message_info.channel_id} にアクセスできません")
+    except discord.errors.NotFound as e:
+        print(f"メッセージID {message_info.message_id} が見つかりません: {e}")
+    except discord.errors.Forbidden as e:
+        print(f"チャンネルID {message_info.channel_id} にアクセスできません: {e}")
+    except Exception as e:
+        # その他のエラー
+        print(f"エラーが発生しました: {e}")
 
 # 削除処理のキュー
-delete_message_queue: List[DeleteMessageInfo] = []
+while delete_message_queue:
+    # 削除処理タスクの実行
+    _ = asyncio.create_task(_run_delete_message_tasks())
+    # 10秒待機
+    await asyncio.sleep(10)
 
 @client.event
 async def on_ready():
+    global running_bot_id
+
+    if running_bot_id is not None:
+        # すでにBotが実行中
+        print(f"Botが既に実行中です (ID: {running_bot_id})")
+        await client.close()
+        return
+
+    running_bot_id = client.user.id
     print(f'{client.user} がログインしました！')
+
+    # 削除処理タスクの実行
+    _ = asyncio.create_task(_run_delete_message_tasks())
 
 def parse_time(time_str: str) -> int:
     # 複数の時間単位を解析する関数
@@ -80,23 +101,11 @@ async def on_message(message: discord.Message):
 
         # 削除処理タスクを1秒後に実行
         await asyncio.sleep(1)
-        _ = asyncio.create_task(_run_delete_message_tasks())
+        _ = asyncio.create_task(_run_delete_message_tasks(message))
 
 @client.event
 async def on_error(event, *args, **kwargs):
     print(f"エラーが発生しました: {event}")
 
 async def _run_delete_message_tasks(message: discord.Message):
-    while delete_message_queue:
-        message_info = delete_message_queue.pop(0)
-        await delete_message_task(message_info)
-        await asyncio.sleep(message_info.delete_time)
-        # 削除完了メッセージ
-        await message.channel.send(f"**メッセージID {message_info.message_id} を削除しました。**")
-
-    # 全てのメッセージ削除完了後、Botの動作を終了
-    await client.close()
-
-    client.run(TOKEN, on_message=_run_delete_message_tasks)
-
-client.run(TOKEN)
+    while delete
